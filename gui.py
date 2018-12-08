@@ -14,7 +14,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.localUi()
 
     def localUi(self):
-        self.generate(1)
+        self.generate(0)
         print(self.ii_fleet)
 
     def generate(self, difficult):  # 0 <= difficult <= 2
@@ -27,9 +27,11 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             while not res:
                 res = self.intersection(size, gen, prob)
             self.ii_fleet.append(Ship(*res))
-            print(res[-1])
             for pair in res[-1]:
                 eval('self.pushButton_1{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
+            for pos in self.ii_fleet[-1].get_borders():
+                self.used.append(pos)
+                eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
 
     @staticmethod
     def generate_cords(d):
@@ -89,14 +91,51 @@ class Ship:
         self.status = 1  # -1 - damaged; 0 - killed; 1 - alive
         self.field = field
         self.size = len(field)
-        self.x_start, self.y_start, self.x_end, self.y_end = x_start, y_start, x_end, y_end
+        self.x_start, self.y_start, self.x_end, self.y_end = min(x_start, x_end), min(y_start, y_end),\
+                                                             max(x_end, x_start), max(y_end, y_start)
         self.borders = []
+        self.get_borders()
 
     def __repr__(self):
         return 'Ship({}): {}'.format(self.size, str(self.field))
 
     def get_borders(self):
-        pass
+        if self.x_start >= 1:
+            xmin = self.x_start - 1
+        else:
+            xmin = 0
+        if self.x_end <= 8:
+            xmax = self.x_end + 1
+        else:
+            xmax = 9
+        if self.y_start >= 1:
+            ymin = self.y_start - 1
+        else:
+            ymin = 0
+        if self.y_end <= 8:
+            ymax = self.y_end + 1
+        else:
+            ymax = 9
+        if ymin >= 0:
+            for i in range(xmin, xmax + 1):
+                if (i, ymin,) not in self.field:
+                    self.borders.append((i, ymin,))
+        if ymax <= 9:
+            for i in range(xmin, xmax + 1):
+                if (i, ymax,) not in self.field:
+                    self.borders.append((i, ymax,))
+        if xmin >= 0:
+            for i in range(ymin, ymax + 1):
+                if (xmin, i,) not in self.field:
+                    self.borders.append((xmin, i,))
+        if xmax <= 9:
+            for i in range(ymin, ymax + 1):
+                if (xmax, i,) not in self.field:
+                    self.borders.append((xmax, i,))
+        for i in ((xmax, ymax), (xmax, ymin), (xmin, ymax), (xmin, ymin)):
+            if i not in self.field:
+                self.borders.append(i)
+        return tuple(set(self.borders))
 
 
 if __name__ == '__main__':
