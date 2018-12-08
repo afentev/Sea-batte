@@ -11,11 +11,31 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.complexity_factor = 2.8
         self.used = []
         self.ii_fleet = []
+        self.user_fleet = []
+        self.user_fleet_full = []
+        self.user_fleet_temp = []
         self.localUi()
 
     def localUi(self):
         self.generate(0)
+        for i in range(100, 200):
+            eval('self.pushButton_{I}.clicked.connect(self.reaction)'.format(I=i))
         print(self.ii_fleet)
+
+    def reaction(self, act):
+        sender = self.sender().objectName()
+        if sender in self.user_fleet and sender not in self.user_fleet_full:
+            self.user_fleet_temp.remove(sender)
+            eval('self.{}.setStyleSheet("background-color: none")'.format(sender))
+        else:
+            self.user_fleet_temp.append(sender)
+            eval('self.{}.setStyleSheet("background-color: gray")'.format(sender))
+
+    def keyPressEvent(self, a0):
+        if a0.key() == 16777220:
+            self.user_fleet.append(tuple(self.user_fleet_temp))
+            self.user_fleet_full.extend(self.user_fleet_temp)
+            self.user_fleet_temp = []
 
     def generate(self, difficult):  # 0 <= difficult <= 2
         prob = difficult / self.complexity_factor
@@ -28,10 +48,10 @@ class MyWidget(QMainWindow, Ui_MainWindow):
                 res = self.intersection(size, gen, prob)
             self.ii_fleet.append(Ship(*res))
             for pair in res[-1]:
-                eval('self.pushButton_1{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
+                eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
             for pos in self.ii_fleet[-1].get_borders():
                 self.used.append(pos)
-                eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
+                eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
 
     @staticmethod
     def generate_cords(d):
