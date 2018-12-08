@@ -24,7 +24,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
 
     def reaction(self, act):
         sender = self.sender().objectName()
-        if sender in self.user_fleet and sender not in self.user_fleet_full:
+        if sender in self.user_fleet_temp:
             self.user_fleet_temp.remove(sender)
             eval('self.{}.setStyleSheet("background-color: none")'.format(sender))
         else:
