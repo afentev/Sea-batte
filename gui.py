@@ -1,6 +1,6 @@
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from form import Ui_MainWindow
 
 
@@ -10,6 +10,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.complexity_factor = 2.8
         self.ii_used = []
+        self.ii_fleet_full = {}
         self.ii_fleet = []
         self.queue = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]
         self.user_used = []
@@ -22,6 +23,22 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.generate(0)
         for i in range(100, 200):
             eval('self.pushButton_{I}.clicked.connect(self.reaction)'.format(I=i))
+            eval('self.pushButton_{I}.clicked.connect(self.attacked)'.format(I=i + 100))
+
+    def attacked(self):
+        parent_name = self.sender().objectName()
+        parent = (int(parent_name[-2]), int(parent_name[-1]))
+        if parent in self.ii_fleet_full:
+            eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(parent[0]), str(parent[1])))
+            res = self.ii_fleet_full[parent].shoot(parent)
+            print(res)
+            for c in res:
+                if c not in self.ii_fleet_full[parent].damaged:
+                    eval('self.pushButton_2{}{}.setStyleSheet("background-color: blue")'.format(str(c[0]),
+                                                                                                str(c[1])))
+        else:
+            eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
+                                                                                         str(parent[1])))
 
     def reaction(self, _):
         sender_name = self.sender().objectName()
@@ -79,6 +96,8 @@ class MyWidget(QMainWindow, Ui_MainWindow):
                 self.user_fleet_temp = []
 
     def game(self):
+        for i in range(100, 200):
+            eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
         first_turn = random.random() > 0.5
         mes = QMessageBox(self)
         mes.setGeometry(350, 200, 100, 100)
@@ -98,7 +117,10 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             res = self.intersection(size, gen, prob)
             while not res:
                 res = self.intersection(size, gen, prob)
-            self.ii_fleet.append(Ship(*res))
+            sh = Ship(*res)
+            for position in res[-1]:
+                self.ii_fleet_full[position] = sh
+            self.ii_fleet.append(sh)
             # for pair in res[-1]:
             #     eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
             for pos in self.ii_fleet[-1].get_borders():
@@ -162,6 +184,7 @@ class Ship:
     def __init__(self, x_start, y_start, x_end, y_end, field):
         self.status = 1  # -1 - damaged; 0 - killed; 1 - alive
         self.field = field
+        self.damaged = []
         self.size = len(field)
         self.x_start, self.y_start, self.x_end, self.y_end = min(x_start, x_end), min(y_start, y_end),\
                                                              max(x_end, x_start), max(y_end, y_start)
@@ -173,6 +196,15 @@ class Ship:
 
     def __contains__(self, item):
         return item in self.field
+
+    def shoot(self, position):
+        self.status = -1
+        self.damaged.append(position)
+        self.field.remove(position)
+        if not self.field:
+            self.status = 0
+            return self.get_borders()
+        return ()
 
     def get_borders(self):
         if self.x_start >= 1:
