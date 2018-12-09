@@ -11,6 +11,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.complexity_factor = 2.8
         self.ii_used = []
         self.ii_fleet = []
+        self.queue = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]
         self.user_used = []
         self.user_fleet = []
         self.user_fleet_full = []
@@ -21,7 +22,6 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.generate(0)
         for i in range(100, 200):
             eval('self.pushButton_{I}.clicked.connect(self.reaction)'.format(I=i))
-        print(self.ii_fleet)
 
     def reaction(self, _):
         sender_name = self.sender().objectName()
@@ -31,20 +31,30 @@ class MyWidget(QMainWindow, Ui_MainWindow):
                 self.user_fleet_temp.remove((int(sender[-2]), int(sender[-1])))
                 eval('self.{}.setStyleSheet("background-color: none")'.format(sender_name))
             elif sender not in self.user_fleet_full:
-                print(1)
                 self.user_fleet_temp.append((int(sender[-2]), int(sender[-1])))
                 eval('self.{}.setStyleSheet("background-color: gray")'.format(sender_name))
 
     def keyPressEvent(self, a0):
         if a0.key() == 16777220:
-            self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
-            xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
-            ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
-            self.user_fleet.append(Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp)))
-            self.user_fleet_full.extend(self.user_fleet_temp)
-            self.user_used.extend(self.user_fleet_temp)
-            self.user_used.extend(self.user_fleet[-1].get_borders())
-            self.user_fleet_temp = []
+            if len(self.user_fleet_temp) in self.queue:
+                self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
+                self.queue.remove(len(self.user_fleet_temp))
+                xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
+                ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
+                self.user_fleet.append(Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp)))
+                self.user_fleet_full.extend(self.user_fleet_temp)
+                self.user_used.extend(self.user_fleet_temp)
+                self.user_used.extend(self.user_fleet[-1].get_borders())
+                self.user_fleet_temp = []
+                if not self.queue:
+                    self.game()
+            else:
+                for sender in self.user_fleet_temp:
+                    eval('self.pushButton_1{}.setStyleSheet("background-color: none")'.format(str(sender[0]) + str(sender[1])))
+                self.user_fleet_temp = []
+
+    def game(self):
+        pass
 
     def generate(self, difficult):  # 0 <= difficult <= 2
         prob = difficult / self.complexity_factor
@@ -127,6 +137,9 @@ class Ship:
 
     def __repr__(self):
         return 'Ship({}): {}'.format(self.size, str(self.field))
+
+    def __contains__(self, item):
+        return item in self.field
 
     def get_borders(self):
         if self.x_start >= 1:
