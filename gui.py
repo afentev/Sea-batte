@@ -9,8 +9,9 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.complexity_factor = 2.8
-        self.used = []
+        self.ii_used = []
         self.ii_fleet = []
+        self.user_used = []
         self.user_fleet = []
         self.user_fleet_full = []
         self.user_fleet_temp = []
@@ -22,19 +23,27 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             eval('self.pushButton_{I}.clicked.connect(self.reaction)'.format(I=i))
         print(self.ii_fleet)
 
-    def reaction(self, act):
-        sender = self.sender().objectName()
-        if sender in self.user_fleet_temp:
-            self.user_fleet_temp.remove(sender)
-            eval('self.{}.setStyleSheet("background-color: none")'.format(sender))
-        else:
-            self.user_fleet_temp.append(sender)
-            eval('self.{}.setStyleSheet("background-color: gray")'.format(sender))
+    def reaction(self, _):
+        sender_name = self.sender().objectName()
+        sender = (int(sender_name[-2]), int(sender_name[-1],))
+        if sender not in self.user_used:
+            if sender in self.user_fleet_temp:
+                self.user_fleet_temp.remove((int(sender[-2]), int(sender[-1])))
+                eval('self.{}.setStyleSheet("background-color: none")'.format(sender_name))
+            elif sender not in self.user_fleet_full:
+                print(1)
+                self.user_fleet_temp.append((int(sender[-2]), int(sender[-1])))
+                eval('self.{}.setStyleSheet("background-color: gray")'.format(sender_name))
 
     def keyPressEvent(self, a0):
         if a0.key() == 16777220:
-            self.user_fleet.append(tuple(self.user_fleet_temp))
+            self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
+            xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
+            ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
+            self.user_fleet.append(Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp)))
             self.user_fleet_full.extend(self.user_fleet_temp)
+            self.user_used.extend(self.user_fleet_temp)
+            self.user_used.extend(self.user_fleet[-1].get_borders())
             self.user_fleet_temp = []
 
     def generate(self, difficult):  # 0 <= difficult <= 2
@@ -47,11 +56,11 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             while not res:
                 res = self.intersection(size, gen, prob)
             self.ii_fleet.append(Ship(*res))
-            for pair in res[-1]:
-                eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
+            # for pair in res[-1]:
+            #     eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
             for pos in self.ii_fleet[-1].get_borders():
-                self.used.append(pos)
-                eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
+                self.ii_used.append(pos)
+                # eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
 
     @staticmethod
     def generate_cords(d):
@@ -94,14 +103,14 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         tmp = []
         for i in range(min(x, x1), max(x1, x) + 1):
             for j in range(min(y1, y), max(y1, y) + 1):
-                if (i, j) in self.used:
+                if (i, j) in self.ii_used:
                     break
                 tmp.append((i, j,))
             else:
                 continue
             break
         else:
-            self.used.extend(tmp)
+            self.ii_used.extend(tmp)
             return x, y, x1, y1, tmp
         return ()
 
