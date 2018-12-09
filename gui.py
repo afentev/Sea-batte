@@ -34,13 +34,38 @@ class MyWidget(QMainWindow, Ui_MainWindow):
                 self.user_fleet_temp.append((int(sender[-2]), int(sender[-1])))
                 eval('self.{}.setStyleSheet("background-color: gray")'.format(sender_name))
 
+    def correct_enter(self, x0, x1, y0, y1, field):
+        if x0 != x1 and y0 != y1:
+            return False
+        elif y0 == y1:
+            if x1 - x0 + 1 not in self.queue:
+                return False
+            else:
+                last = field[0][0]
+                for pair in field[1:]:
+                    if pair[0] - last != 1:
+                        return False
+                    last = pair[0]
+                return True
+        else:
+            if y1 - y0 + 1 not in self.queue:
+                return False
+            else:
+                last = field[0][1]
+                for pair in field[1:]:
+                    if pair[1] - last != 1:
+                        return False
+                    last = pair[1]
+                return True
+
     def keyPressEvent(self, a0):
         if a0.key() == 16777220:
-            if len(self.user_fleet_temp) in self.queue:
-                self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
+            self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
+            xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
+            ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
+            print(self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp))
+            if len(self.user_fleet_temp) in self.queue and self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp):
                 self.queue.remove(len(self.user_fleet_temp))
-                xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
-                ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
                 self.user_fleet.append(Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp)))
                 self.user_fleet_full.extend(self.user_fleet_temp)
                 self.user_used.extend(self.user_fleet_temp)
@@ -54,7 +79,15 @@ class MyWidget(QMainWindow, Ui_MainWindow):
                 self.user_fleet_temp = []
 
     def game(self):
-        pass
+        first_turn = random.random() > 0.5
+        mes = QMessageBox(self)
+        mes.setGeometry(350, 200, 100, 100)
+        mes.setText('Вы начинаете' if first_turn else 'Я начинаю')
+        if first_turn:
+            mes.setText('Вы начинаете')
+        else:
+            mes.setText('Я начинаю')
+        mes.show()
 
     def generate(self, difficult):  # 0 <= difficult <= 2
         prob = difficult / self.complexity_factor
