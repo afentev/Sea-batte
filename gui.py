@@ -9,13 +9,85 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.complexity_factor = 2.8
-        self.used = []
+        self.ii_used = []
         self.ii_fleet = []
+        self.queue = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]
+        self.user_used = []
+        self.user_fleet = []
+        self.user_fleet_full = []
+        self.user_fleet_temp = []
         self.localUi()
 
     def localUi(self):
         self.generate(0)
-        print(self.ii_fleet)
+        for i in range(100, 200):
+            eval('self.pushButton_{I}.clicked.connect(self.reaction)'.format(I=i))
+
+    def reaction(self, _):
+        sender_name = self.sender().objectName()
+        sender = (int(sender_name[-2]), int(sender_name[-1],))
+        if sender not in self.user_used:
+            if sender in self.user_fleet_temp:
+                self.user_fleet_temp.remove((int(sender[-2]), int(sender[-1])))
+                eval('self.{}.setStyleSheet("background-color: none")'.format(sender_name))
+            elif sender not in self.user_fleet_full:
+                self.user_fleet_temp.append((int(sender[-2]), int(sender[-1])))
+                eval('self.{}.setStyleSheet("background-color: gray")'.format(sender_name))
+
+    def correct_enter(self, x0, x1, y0, y1, field):
+        if x0 != x1 and y0 != y1:
+            return False
+        elif y0 == y1:
+            if x1 - x0 + 1 not in self.queue:
+                return False
+            else:
+                last = field[0][0]
+                for pair in field[1:]:
+                    if pair[0] - last != 1:
+                        return False
+                    last = pair[0]
+                return True
+        else:
+            if y1 - y0 + 1 not in self.queue:
+                return False
+            else:
+                last = field[0][1]
+                for pair in field[1:]:
+                    if pair[1] - last != 1:
+                        return False
+                    last = pair[1]
+                return True
+
+    def keyPressEvent(self, a0):
+        if a0.key() == 16777220:
+            self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
+            xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
+            ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
+            print(self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp))
+            if len(self.user_fleet_temp) in self.queue and self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp):
+                self.queue.remove(len(self.user_fleet_temp))
+                self.user_fleet.append(Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp)))
+                self.user_fleet_full.extend(self.user_fleet_temp)
+                self.user_used.extend(self.user_fleet_temp)
+                self.user_used.extend(self.user_fleet[-1].get_borders())
+                self.user_fleet_temp = []
+                if not self.queue:
+                    self.game()
+            else:
+                for sender in self.user_fleet_temp:
+                    eval('self.pushButton_1{}.setStyleSheet("background-color: none")'.format(str(sender[0]) + str(sender[1])))
+                self.user_fleet_temp = []
+
+    def game(self):
+        first_turn = random.random() > 0.5
+        mes = QMessageBox(self)
+        mes.setGeometry(350, 200, 100, 100)
+        mes.setText('Вы начинаете' if first_turn else 'Я начинаю')
+        if first_turn:
+            mes.setText('Вы начинаете')
+        else:
+            mes.setText('Я начинаю')
+        mes.show()
 
     def generate(self, difficult):  # 0 <= difficult <= 2
         prob = difficult / self.complexity_factor
@@ -27,11 +99,11 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             while not res:
                 res = self.intersection(size, gen, prob)
             self.ii_fleet.append(Ship(*res))
-            for pair in res[-1]:
-                eval('self.pushButton_1{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
+            # for pair in res[-1]:
+            #     eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
             for pos in self.ii_fleet[-1].get_borders():
-                self.used.append(pos)
-                eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
+                self.ii_used.append(pos)
+                # eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
 
     @staticmethod
     def generate_cords(d):
@@ -74,14 +146,14 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         tmp = []
         for i in range(min(x, x1), max(x1, x) + 1):
             for j in range(min(y1, y), max(y1, y) + 1):
-                if (i, j) in self.used:
+                if (i, j) in self.ii_used:
                     break
                 tmp.append((i, j,))
             else:
                 continue
             break
         else:
-            self.used.extend(tmp)
+            self.ii_used.extend(tmp)
             return x, y, x1, y1, tmp
         return ()
 
@@ -98,6 +170,9 @@ class Ship:
 
     def __repr__(self):
         return 'Ship({}): {}'.format(self.size, str(self.field))
+
+    def __contains__(self, item):
+        return item in self.field
 
     def get_borders(self):
         if self.x_start >= 1:
