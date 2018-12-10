@@ -20,6 +20,7 @@ try:
             self.user_fleet = []
             self.user_fleet_full = {}
             self.user_fleet_temp = []
+            self.first_turn = random.random() > 0.5
             self.attack_status = []  # empty if not damaged
             self.ii_field_damaged = set()
             self.user_field_damaged = set()
@@ -32,6 +33,8 @@ try:
                 eval('self.pushButton_{I}.clicked.connect(self.attacked)'.format(I=i + 100))
     
         def attacked(self):
+            for i in range(200, 300):
+                eval('self.pushButton_{I}.setDisabled(False)'.format(I=i))
             parent_name = self.sender().objectName()
             parent = (int(parent_name[-2]), int(parent_name[-1]))
             if parent not in self.ii_field_damaged:
@@ -50,8 +53,11 @@ try:
                     self.ii_fleet_full.pop(parent)
                 else:
                     eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
-                                                                                                 str(parent[1])))
-            print(len(self.ii_fleet))
+                                                                                                str(parent[1])))
+            if self.user_fleet and self.ii_flee:
+                pass  # TODO
+            self.computer_attack()
+            
     
         def reaction(self, _):
             sender_name = self.sender().objectName()
@@ -114,7 +120,6 @@ try:
         def game(self):
             for i in range(100, 200):
                 eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
-            first_turn = random.random() > 0.5
             mes = QMessageBox(self)
             mes.setGeometry(350, 200, 100, 100)
             mes.setText('Вы начинаете' if first_turn else 'Я начинаю')
@@ -123,17 +128,10 @@ try:
             else:
                 mes.setText('Я начинаю')
             mes.show()
-            while self.user_fleet and self.ii_fleet:
-                if first_turn:
-                    for i in range(200, 300):
-                        eval('self.pushButton_{I}.setDisabled(False)'.format(I=i))
-                else:
-                    for i in range(200, 300):
-                        eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
-                    self.computer_attack()
-                first_turn = not first_turn
         
         def computer_attack(self):
+            for i in range(200, 300):
+                eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
             if self.attack_status:
                 pass
             else:
@@ -155,7 +153,9 @@ try:
                     self.user_fleet_full.pop((x, y))
                 else:
                     eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(x),
-                                                                                                str(y)))           
+                                                                                                str(y)))  
+            if self.user_fleet and self.ii_flee:
+                pass  # TODO
                             
     
         def generate(self, difficult):  # 0 <= difficult <= 2
