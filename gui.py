@@ -17,6 +17,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.user_fleet = []
         self.user_fleet_full = []
         self.user_fleet_temp = []
+        self.ii_field_damaged = set()
         self.localUi()
 
     def localUi(self):
@@ -28,17 +29,24 @@ class MyWidget(QMainWindow, Ui_MainWindow):
     def attacked(self):
         parent_name = self.sender().objectName()
         parent = (int(parent_name[-2]), int(parent_name[-1]))
-        if parent in self.ii_fleet_full:
-            eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(parent[0]), str(parent[1])))
-            res = self.ii_fleet_full[parent].shoot(parent)
-            print(res)
-            for c in res:
-                if c not in self.ii_fleet_full[parent].damaged:
-                    eval('self.pushButton_2{}{}.setStyleSheet("background-color: blue")'.format(str(c[0]),
-                                                                                                str(c[1])))
-        else:
-            eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
-                                                                                         str(parent[1])))
+        if parent not in self.ii_field_damaged:
+            self.ii_field_damaged.add(parent)
+            if parent in self.ii_fleet_full:
+                eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(parent[0]), str(parent[1])))
+                res = self.ii_fleet_full[parent].shoot(parent)
+                dam = self.ii_fleet_full[parent].damaged
+                for c in res:
+                    if c not in dam:
+                        self.ii_field_damaged.add(c)
+                        eval('self.pushButton_2{}{}.setStyleSheet("background-color: blue")'.format(str(c[0]),
+                                                                                                   str(c[1])))
+                if res:
+                    self.ii_fleet.remove(self.ii_fleet_full[parent])
+                self.ii_fleet_full.pop(parent)
+            else:
+                eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
+                                                                                             str(parent[1])))
+        print(len(self.ii_fleet))
 
     def reaction(self, _):
         sender_name = self.sender().objectName()
@@ -81,7 +89,8 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
             ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], max(self.user_fleet_temp, key=lambda a: a[1])[1]
             print(self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp))
-            if len(self.user_fleet_temp) in self.queue and self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp):
+            if len(self.user_fleet_temp) in self.queue and self.correct_enter(xmin, xmax, ymin,
+                                                                              ymax, self.user_fleet_temp):
                 self.queue.remove(len(self.user_fleet_temp))
                 self.user_fleet.append(Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp)))
                 self.user_fleet_full.extend(self.user_fleet_temp)
@@ -101,12 +110,14 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         first_turn = random.random() > 0.5
         mes = QMessageBox(self)
         mes.setGeometry(350, 200, 100, 100)
-        mes.setText('Р’С‹ РЅР°С‡РёРЅР°РµС‚Рµ' if first_turn else 'РЇ РЅР°С‡РёРЅР°СЋ')
+        mes.setText('Вы начинаете' if first_turn else 'Я начинаю')
         if first_turn:
-            mes.setText('Р’С‹ РЅР°С‡РёРЅР°РµС‚Рµ')
+            mes.setText('Вы начинаете')
         else:
-            mes.setText('РЇ РЅР°С‡РёРЅР°СЋ')
+            mes.setText('Я начинаю')
         mes.show()
+        while self.user_fleet and self.ii_fleet:
+            pass
 
     def generate(self, difficult):  # 0 <= difficult <= 2
         prob = difficult / self.complexity_factor
@@ -249,4 +260,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MyWidget()
     ex.show()
-    sys.exit(app.exec_())
+sys.exit(app.exec_())
