@@ -19,6 +19,7 @@ try:
             self.user_used = []
             self.user_fleet = []
             self.user_fleet_full = {}
+            self.temp_damaged = []
             self.user_fleet_temp = []
             self.first_turn = random.random() > 0.5
             self.attack_status = []  # empty if not damaged
@@ -50,12 +51,14 @@ try:
                     if res:
                         self.ii_fleet.remove(self.ii_fleet_full[parent])
                     self.ii_fleet_full.pop(parent)
-                    return 
+                    return
                 else:
                     eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
                                                                                                  str(parent[1])))
-            if self.user_fleet and self.ii_fleet:
-                self.computer_attack()
+                    self.computer_attack()
+                    return
+            # if self.user_fleet and self.ii_fleet:
+            #     self.computer_attack()
 
         def reaction(self, _):
             sender_name = self.sender().objectName()
@@ -107,7 +110,7 @@ try:
                     for pos in self.user_fleet_temp:
                         self.user_fleet_full[pos] = s
                     self.user_used.extend(self.user_fleet_temp)
-                    self.user_used.extend(self.user_fleet[-1].get_borders())
+                    self.user_used.extend(self.user_fleet[-1].borders)
                     self.user_fleet_temp = []
                     if not self.queue:
                         self.game()
@@ -134,33 +137,70 @@ try:
         def computer_attack(self):
             for i in range(200, 300):
                 eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
-            if self.attack_status:
-                pass
-            else:
-                x, y = random.randint(0, 9), random.randint(0, 9)
-                while (x, y) in self.user_field_damaged:
-                    x, y = random.randint(0, 9), random.randint(0, 9)
-                if (x, y) in self.user_fleet_full:
-                    eval('self.pushButton_1{}{}.setStyleSheet("background-color: red")'.format(str(x),
-                                                                                               str(y)))
-                    res = self.user_fleet_full[(x, y)].shoot((x, y,))
-                    dam = self.user_fleet_full[(x, y)].damaged
-                    for c in res:
-                        if c not in dam:
-                            self.user_field_damaged.add(c)
-                            eval('self.pushButton_1{}{}.setStyleSheet("background-color: blue")'.format(str(x),
-                                                                                                        str(y)))
-                    if res:
-                        self.user_fleet.remove(self.user_fleet_full[(x, y)])
-                    self.user_fleet_full.pop((x, y))
-                    self.computer_attack()
-                    return
+            if self.temp_damaged:
+                tt_array = []
+                if len(self.temp_damaged) == 1:
+                    xt, yt = self.temp_damaged[0]
+                    if xt > 0:
+                        if (xt - 1, yt) not in self.user_field_damaged:
+                            tt_array.append((xt - 1, yt))
+                    if xt < 9:
+                        if (xt + 1, yt) not in self.user_field_damaged:
+                            tt_array.append((xt + 1, yt))
+                    if yt > 0:
+                        if (xt, yt - 1) not in self.user_field_damaged:
+                            tt_array.append((xt, yt - 1))
+                    if yt < 9:
+                        if (xt, yt + 1) not in self.user_field_damaged:
+                            tt_array.append((xt, yt + 1))
+                    pos = random.choice(tt_array)
                 else:
-                    eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(x),
-                                                                                                 str(y)))
-            if self.user_fleet and self.ii_fleet:
-                for i in range(200, 300):
-                    eval('self.pushButton_{I}.setDisabled(False)'.format(I=i))
+                    xmin, xmax, ymin, ymax = (min(self.temp_damaged, key=lambda a: a[0])[0],
+                                              max(self.temp_damaged, key=lambda a: a[0])[0],
+                                              min(self.temp_damaged, key=lambda a: a[1])[1],
+                                              max(self.temp_damaged, key=lambda a: a[1])[1])
+                    dx, dy = xmax - xmin + 1, ymax - ymin + 1
+                    if dx == 1:
+                        if ymin - 1 > 0 and (xmin, ymin - 1) not in self.user_field_damaged:
+                            tt_array.append((xmin, ymin - 1))
+                        if ymax + 1 < 9 and (xmin, ymax + 1) not in self.user_field_damaged:
+                            tt_array.append((xmin, ymax + 1))
+                    if dy == 1:
+                        if xmin - 1 > 0 and (xmin - 1, ymax) not in self.user_field_damaged:
+                            tt_array.append((xmin - 1, ymin))
+                        if xmax + 1 < 9 and (xmax + 1, ymax) not in self.user_field_damaged:
+                            tt_array.append((xmax + 1, ymin))
+                    pos = random.choice(tt_array)
+                    print(pos, pos in self.user_fleet_full, xmin, xmax, ymin, ymax, dx, dy)
+            else:
+                pos = (random.randint(0, 9), random.randint(0, 9))
+                while pos in self.user_field_damaged:
+                    pos = random.randint(0, 9), random.randint(0, 9)
+            self.user_field_damaged.add(pos)
+            if pos in self.user_fleet_full:
+                eval('self.pushButton_1{}{}.setStyleSheet("background-color: red")'.format(str(pos[0]),
+                                                                                           str(pos[1])))
+                res = self.user_fleet_full[pos].shoot(pos)
+                dam = self.user_fleet_full[pos].damaged
+                print(res, dam)
+                for c in res:
+                    if c not in dam:
+                        self.user_field_damaged.add(c)
+                        eval('self.pushButton_1{}{}.setStyleSheet("background-color: blue")'.format(str(c[0]),
+                                                                                                    str(c[1])))
+                if res:
+                    self.user_fleet.remove(self.user_fleet_full[pos])
+                    self.temp_damaged = []
+                else:
+                    self.temp_damaged.append(pos)
+                self.user_fleet_full.pop(pos)
+                self.computer_attack()
+            else:
+                eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]),
+                                                                                             str(pos[1])))
+                if self.user_fleet and self.ii_fleet:
+                    for i in range(200, 300):
+                        eval('self.pushButton_{I}.setDisabled(False)'.format(I=i))
 
         def generate(self, difficult):  # 0 <= difficult <= 2
             prob = difficult / self.complexity_factor
@@ -177,7 +217,7 @@ try:
                 self.ii_fleet.append(sh)
                 # for pair in res[-1]:
                 #     eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
-                for pos in self.ii_fleet[-1].get_borders():
+                for pos in self.ii_fleet[-1].borders:
                     self.ii_used.append(pos)
                     # eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
 
@@ -257,7 +297,7 @@ try:
             self.field.remove(position)
             if not self.field:
                 self.status = 0
-                return self.get_borders()
+                return self.borders
             return ()
 
         def get_borders(self):
