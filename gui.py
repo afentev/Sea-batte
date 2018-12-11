@@ -357,5 +357,9 @@ try:
         ex.show()
         sys.exit(app.exec_())
 except:
-    print(sys.exc_info())
-    input()
+    execute = sys.exc_info()
+    if not isinstance(execute[0], SystemExit):
+        print('Похоже, произошла непредвиденная ошибка. Если вы видете это сообщение, отправьте, пожалуйста текст, '
+              'находящийся ниже, автору, а также, если возможно, опишите последовательность действий, приведших к'
+              'такому результату. Заранее спасибо. t.me/afentev\n\n----------------\n\n', execute)
+    input('Press Enter to close...')
