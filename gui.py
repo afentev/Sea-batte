@@ -51,12 +51,21 @@ try:
                     if res:
                         self.ii_fleet.remove(self.ii_fleet_full[parent])
                     self.ii_fleet_full.pop(parent)
+                    if not self.user_fleet or not self.ii_fleet:
+                        mes = QMessageBox(self).question(self, 'Game over', 'Вы победили!', QMessageBox.Ok)
+                        if mes == QMessageBox.Ok:
+                            self.deleteLater()
                     return
                 else:
                     eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
                                                                                                  str(parent[1])))
-                    self.computer_attack()
-                    return
+                    if self.user_fleet and self.ii_fleet:
+                        self.computer_attack()
+                        return
+                    else:
+                        mes = QMessageBox(self)
+                        mes.setText('Вы победили!')
+                        mes.show()
             # if self.user_fleet and self.ii_fleet:
             #     self.computer_attack()
 
@@ -125,7 +134,6 @@ try:
                 eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
             mes = QMessageBox(self)
             mes.setGeometry(350, 200, 100, 100)
-            mes.setText('Вы начинаете' if self.first_turn else 'Я начинаю')
             if self.first_turn:
                 mes.setText('Вы начинаете')
                 mes.show()
@@ -160,18 +168,18 @@ try:
                                               min(self.temp_damaged, key=lambda a: a[1])[1],
                                               max(self.temp_damaged, key=lambda a: a[1])[1])
                     dx, dy = xmax - xmin + 1, ymax - ymin + 1
+                    print(xmin, xmax, ymin, ymax, dx, dy, self.user_field_damaged)
                     if dx == 1:
-                        if ymin - 1 > 0 and (xmin, ymin - 1) not in self.user_field_damaged:
+                        if ymin - 1 >= 0 and (xmin, ymin - 1) not in self.user_field_damaged:
                             tt_array.append((xmin, ymin - 1))
-                        if ymax + 1 < 9 and (xmin, ymax + 1) not in self.user_field_damaged:
+                        if ymax + 1 <= 9 and (xmin, ymax + 1) not in self.user_field_damaged:
                             tt_array.append((xmin, ymax + 1))
                     if dy == 1:
-                        if xmin - 1 > 0 and (xmin - 1, ymax) not in self.user_field_damaged:
+                        if xmin - 1 >= 0 and (xmin - 1, ymax) not in self.user_field_damaged:
                             tt_array.append((xmin - 1, ymin))
-                        if xmax + 1 < 9 and (xmax + 1, ymax) not in self.user_field_damaged:
+                        if xmax + 1 <= 9 and (xmax + 1, ymax) not in self.user_field_damaged:
                             tt_array.append((xmax + 1, ymin))
                     pos = random.choice(tt_array)
-                    print(pos, pos in self.user_fleet_full, xmin, xmax, ymin, ymax, dx, dy)
             else:
                 pos = (random.randint(0, 9), random.randint(0, 9))
                 while pos in self.user_field_damaged:
@@ -201,6 +209,10 @@ try:
                 if self.user_fleet and self.ii_fleet:
                     for i in range(200, 300):
                         eval('self.pushButton_{I}.setDisabled(False)'.format(I=i))
+                else:
+                    mes = QMessageBox(self).question(self, 'Game over', 'Я победил!', QMessageBox.Ok)
+                    if mes == QMessageBox.Ok:
+                        self.deleteLater()
 
         def generate(self, difficult):  # 0 <= difficult <= 2
             prob = difficult / self.complexity_factor
