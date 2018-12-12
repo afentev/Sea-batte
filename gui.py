@@ -28,7 +28,7 @@ try:
             self.local_ui()
 
         def local_ui(self):
-            self.generate(2)
+            self.generate(0)
             for i in range(100, 200):
                 eval('self.pushButton_{q}.clicked.connect(self.'
                      'reaction)'.format(q=i))
@@ -213,7 +213,6 @@ try:
                      'color: red")'.format(str(pos[0]), str(pos[1])))
                 res = self.user_fleet_full[pos].shoot(pos)
                 dam = self.user_fleet_full[pos].damaged
-                print(res, dam)
                 for c in res:
                     if c not in dam:
                         self.user_field_damaged.add(c)
