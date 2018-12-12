@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 try:
     import sys
@@ -25,13 +25,15 @@ try:
             self.attack_status = []  # empty if not damaged
             self.ii_field_damaged = set()
             self.user_field_damaged = set()
-            self.localUi()
+            self.local_ui()
 
-        def localUi(self):
-            self.generate(0)
+        def local_ui(self):
+            self.generate(2)
             for i in range(100, 200):
-                eval('self.pushButton_{I}.clicked.connect(self.reaction)'.format(I=i))
-                eval('self.pushButton_{I}.clicked.connect(self.attacked)'.format(I=i + 100))
+                eval('self.pushButton_{q}.clicked.connect(self.'
+                     'reaction)'.format(q=i))
+                eval('self.pushButton_{q}.clicked.connect(self.'
+                     'attacked)'.format(q=i + 100))
 
         def attacked(self):
             parent_name = self.sender().objectName()
@@ -39,33 +41,38 @@ try:
             if parent not in self.ii_field_damaged:
                 self.ii_field_damaged.add(parent)
                 if parent in self.ii_fleet_full:
-                    eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(parent[0]),
-                                                                                               str(parent[1])))
+                    eval('self.pushButton_2{}{}.setStyleSheet("'
+                         'background-color: red")'.format(str(parent[0]),
+                                                          str(parent[1])))
                     res = self.ii_fleet_full[parent].shoot(parent)
                     dam = self.ii_fleet_full[parent].damaged
                     for c in res:
                         if c not in dam:
                             self.ii_field_damaged.add(c)
-                            eval('self.pushButton_2{}{}.setStyleSheet("background-color: blue")'.format(str(c[0]),
-                                                                                                        str(c[1])))
+                            eval('self.pushButton_2{}{}.setStyleSheet('
+                                 '"background-color: blue")'.format(str(c[0]),
+                                                                    str(c[1])))
                     if res:
                         self.ii_fleet.remove(self.ii_fleet_full[parent])
                     self.ii_fleet_full.pop(parent)
                     if not self.user_fleet or not self.ii_fleet:
-                        mes = QMessageBox(self).question(self, 'Game over', 'Вы победили!', QMessageBox.Ok)
-                        if mes == QMessageBox.Ok:
-                            self.deleteLater()
+                        QMessageBox(self).question(self, 'Game over',
+                                                   'Вы победили!\nPress '
+                                                   'Esc to close',
+                                                   QMessageBox.Ok)
                     return
                 else:
-                    eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(parent[0]),
-                                                                                                 str(parent[1])))
+                    eval('self.pushButton_2{}{}.setStyleSheet("background-'
+                         'color: black")'.format(str(parent[0]),
+                                                 str(parent[1])))
                     if self.user_fleet and self.ii_fleet:
                         self.computer_attack()
                         return
                     else:
-                        mes = QMessageBox(self)
-                        mes.setText('Вы победили!')
-                        mes.show()
+                        QMessageBox(self).question(self, 'Game over',
+                                                   'Вы победили!\nPress'
+                                                   'Esc to close',
+                                                   QMessageBox.Ok)
             # if self.user_fleet and self.ii_fleet:
             #     self.computer_attack()
 
@@ -74,11 +81,15 @@ try:
             sender = (int(sender_name[-2]), int(sender_name[-1], ))
             if sender not in self.user_used:
                 if sender in self.user_fleet_temp:
-                    self.user_fleet_temp.remove((int(sender[-2]), int(sender[-1])))
-                    eval('self.{}.setStyleSheet("background-color: none")'.format(sender_name))
+                    self.user_fleet_temp.remove((int(sender[-2]),
+                                                 int(sender[-1])))
+                    eval('self.{}.setStyleSheet("background-'
+                         'color: none")'.format(sender_name))
                 elif sender not in self.user_fleet_full:
-                    self.user_fleet_temp.append((int(sender[-2]), int(sender[-1])))
-                    eval('self.{}.setStyleSheet("background-color: gray")'.format(sender_name))
+                    self.user_fleet_temp.append((int(sender[-2]),
+                                                 int(sender[-1])))
+                    eval('self.{}.setStyleSheet("background-'
+                         'color: gray")'.format(sender_name))
 
         def correct_enter(self, x0, x1, y0, y1, field):
             if x0 != x1 and y0 != y1:
@@ -107,14 +118,16 @@ try:
         def keyPressEvent(self, a0):
             if a0.key() == 16777220 and self.user_fleet_temp:
                 self.user_fleet_temp = tuple(sorted(self.user_fleet_temp))
-                xmin, xmax = self.user_fleet_temp[0][0], self.user_fleet_temp[-1][0]
-                ymin, ymax = min(self.user_fleet_temp, key=lambda a: a[1])[1], \
-                             max(self.user_fleet_temp, key=lambda a: a[1])[1]
-                print(self.correct_enter(xmin, xmax, ymin, ymax, self.user_fleet_temp))
-                if len(self.user_fleet_temp) in self.queue and self.correct_enter(xmin, xmax, ymin,
-                                                                                  ymax, self.user_fleet_temp):
+                xmin, xmax = (self.user_fleet_temp[0][0],
+                              self.user_fleet_temp[-1][0])
+                ymin, ymax = (min(self.user_fleet_temp, key=lambda a: a[1])[1],
+                              max(self.user_fleet_temp, key=lambda a: a[1])[1])
+                if len(self.user_fleet_temp) in self.queue and\
+                        self.correct_enter(xmin, xmax, ymin, ymax,
+                                           self.user_fleet_temp):
                     self.queue.remove(len(self.user_fleet_temp))
-                    s = Ship(xmin, ymin, xmax, ymax, tuple(self.user_fleet_temp))
+                    s = Ship(xmin, ymin, xmax, ymax,
+                             tuple(self.user_fleet_temp))
                     self.user_fleet.append(s)
                     for pos in self.user_fleet_temp:
                         self.user_fleet_full[pos] = s
@@ -125,13 +138,16 @@ try:
                         self.game()
                 else:
                     for sender in self.user_fleet_temp:
-                        eval('self.pushButton_1{}.setStyleSheet("background-color: none")'.format(
-                            str(sender[0]) + str(sender[1])))
+                        eval('self.pushButton_1{}.setStyleSheet("background-'
+                             'color: none")'.format(
+                              str(sender[0]) + str(sender[1])))
                     self.user_fleet_temp = []
+            elif a0.key() == 16777216:
+                self.deleteLater()
 
         def game(self):
             for i in range(100, 200):
-                eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
+                eval('self.pushButton_{q}.setDisabled(True)'.format(q=i))
             mes = QMessageBox(self)
             mes.setGeometry(350, 200, 100, 100)
             if self.first_turn:
@@ -144,7 +160,7 @@ try:
 
         def computer_attack(self):
             for i in range(200, 300):
-                eval('self.pushButton_{I}.setDisabled(True)'.format(I=i))
+                eval('self.pushButton_{q}.setDisabled(True)'.format(q=i))
             if self.temp_damaged:
                 tt_array = []
                 if len(self.temp_damaged) == 1:
@@ -163,21 +179,28 @@ try:
                             tt_array.append((xt, yt + 1))
                     pos = random.choice(tt_array)
                 else:
-                    xmin, xmax, ymin, ymax = (min(self.temp_damaged, key=lambda a: a[0])[0],
-                                              max(self.temp_damaged, key=lambda a: a[0])[0],
-                                              min(self.temp_damaged, key=lambda a: a[1])[1],
-                                              max(self.temp_damaged, key=lambda a: a[1])[1])
+                    xmin, xmax, ymin, ymax = (min(self.temp_damaged,
+                                                  key=lambda a: a[0])[0],
+                                              max(self.temp_damaged,
+                                                  key=lambda a: a[0])[0],
+                                              min(self.temp_damaged,
+                                                  key=lambda a: a[1])[1],
+                                              max(self.temp_damaged,
+                                                  key=lambda a: a[1])[1])
                     dx, dy = xmax - xmin + 1, ymax - ymin + 1
-                    print(xmin, xmax, ymin, ymax, dx, dy, self.user_field_damaged)
                     if dx == 1:
-                        if ymin - 1 >= 0 and (xmin, ymin - 1) not in self.user_field_damaged:
+                        if ymin - 1 >= 0 and (xmin, ymin - 1)\
+                                not in self.user_field_damaged:
                             tt_array.append((xmin, ymin - 1))
-                        if ymax + 1 <= 9 and (xmin, ymax + 1) not in self.user_field_damaged:
+                        if ymax + 1 <= 9 and (xmin, ymax + 1)\
+                                not in self.user_field_damaged:
                             tt_array.append((xmin, ymax + 1))
                     if dy == 1:
-                        if xmin - 1 >= 0 and (xmin - 1, ymax) not in self.user_field_damaged:
+                        if xmin - 1 >= 0 and (xmin - 1, ymax)\
+                                not in self.user_field_damaged:
                             tt_array.append((xmin - 1, ymin))
-                        if xmax + 1 <= 9 and (xmax + 1, ymax) not in self.user_field_damaged:
+                        if xmax + 1 <= 9 and (xmax + 1, ymax)\
+                                not in self.user_field_damaged:
                             tt_array.append((xmax + 1, ymin))
                     pos = random.choice(tt_array)
             else:
@@ -186,40 +209,52 @@ try:
                     pos = random.randint(0, 9), random.randint(0, 9)
             self.user_field_damaged.add(pos)
             if pos in self.user_fleet_full:
-                eval('self.pushButton_1{}{}.setStyleSheet("background-color: red")'.format(str(pos[0]),
-                                                                                           str(pos[1])))
+                eval('self.pushButton_1{}{}.setStyleSheet("background-'
+                     'color: red")'.format(str(pos[0]), str(pos[1])))
                 res = self.user_fleet_full[pos].shoot(pos)
                 dam = self.user_fleet_full[pos].damaged
                 print(res, dam)
                 for c in res:
                     if c not in dam:
                         self.user_field_damaged.add(c)
-                        eval('self.pushButton_1{}{}.setStyleSheet("background-color: blue")'.format(str(c[0]),
-                                                                                                    str(c[1])))
+                        eval('self.pushButton_1{}{}.setStyleSheet("background-'
+                             'color: blue")'.format(str(c[0]), str(c[1])))
                 if res:
                     self.user_fleet.remove(self.user_fleet_full[pos])
                     self.temp_damaged = []
                 else:
                     self.temp_damaged.append(pos)
                 self.user_fleet_full.pop(pos)
+                if not self.user_fleet or not self.ii_fleet:
+                    self.engame()
+                    return
                 self.computer_attack()
             else:
-                eval('self.pushButton_1{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]),
-                                                                                             str(pos[1])))
+                eval('self.pushButton_1{}{}.setStyleSheet("background-'
+                     'color: black")'.format(str(pos[0]), str(pos[1])))
                 if self.user_fleet and self.ii_fleet:
                     for i in range(200, 300):
-                        eval('self.pushButton_{I}.setDisabled(False)'.format(I=i))
+                        eval('self.pushButton_{q}.'
+                             'setDisabled(False)'.format(q=i))
                 else:
-                    mes = QMessageBox(self).question(self, 'Game over', 'Я победил!', QMessageBox.Ok)
-                    if mes == QMessageBox.Ok:
-                        self.deleteLater()
+                    self.engame()
+
+        def engame(self):
+            for i in self.ii_fleet:
+                for pos in i.field:
+                    eval(
+                        'self.pushButton_2{}{}.setStyleSheet("background-'
+                        'color: green")'.format(str(pos[0]), str(pos[1])))
+            QMessageBox().question(self, 'Game over',
+                                   'Я победил!\nPress Esc to close',
+                                   QMessageBox.Ok)
 
         def generate(self, difficult):  # 0 <= difficult <= 2
             prob = difficult / self.complexity_factor
             for ship in range(10):
                 gen = random.random()
-                size = 5 - int(ship <= 3) - int(ship <= 6) - int(ship <= 8) - int(ship <= 9)
-                # x, y, x1, y1 = self.all_(size, gen, prob)
+                size = 5 - int(ship <= 3) - int(ship <= 6) - int(
+                    ship <= 8) - int(ship <= 9)
                 res = self.intersection(size, gen, prob)
                 while not res:
                     res = self.intersection(size, gen, prob)
@@ -228,10 +263,8 @@ try:
                     self.ii_fleet_full[position] = sh
                 self.ii_fleet.append(sh)
                 # for pair in res[-1]:
-                #     eval('self.pushButton_2{}{}.setStyleSheet("background-color: red")'.format(str(pair[0]), str(pair[1])))
                 for pos in self.ii_fleet[-1].borders:
                     self.ii_used.append(pos)
-                    # eval('self.pushButton_2{}{}.setStyleSheet("background-color: black")'.format(str(pos[0]), str(pos[1])))
 
         @staticmethod
         def generate_cords(d):
@@ -292,8 +325,14 @@ try:
             self.field = list(field)
             self.damaged = []
             self.size = len(field)
-            self.x_start, self.y_start, self.x_end, self.y_end = min(x_start, x_end), min(y_start, y_end), \
-                                                                 max(x_end, x_start), max(y_end, y_start)
+            self.x_start, self.y_start, self.x_end, self.y_end = (min(x_start,
+                                                                      x_end),
+                                                                  min(y_start,
+                                                                      y_end),
+                                                                  max(x_end,
+                                                                      x_start),
+                                                                  max(y_end,
+                                                                      y_start))
             self.borders = []
             self.get_borders()
 
@@ -356,10 +395,12 @@ try:
         ex = MyWidget()
         ex.show()
         sys.exit(app.exec_())
-except:
+except Exception:
     execute = sys.exc_info()
-    if not isinstance(execute[0], SystemExit):
-        print('Похоже, произошла непредвиденная ошибка. Если вы видете это сообщение, отправьте, пожалуйста текст, '
-              'находящийся ниже, автору, а также, если возможно, опишите последовательность действий, приведших к'
-              'такому результату. Заранее спасибо. t.me/afentev\n\n----------------\n\n', execute)
-    input('Press Enter to close...')
+    if not execute[0] == SystemExit:
+        print('Похоже, произошла непредвиденная ошибка. Если вы видете это '
+              'сообщение, отправьте, пожалуйста текст, находящийся ниже, '
+              'автору, а также, если возможно, опишите последовательность '
+              'действий, приведших к такому результату. Заранее спасибо. '
+              't.me/afentev\n\n----------------\n\n', execute)
+        input('Press Enter to close...')
