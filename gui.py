@@ -16,6 +16,7 @@ try:
             self.ii_fleet_full = {}
             self.ii_fleet = []
             self.queue = [1, 1, 1, 1, 2, 2, 2, 3, 3, 4]
+            self.is_game = False
             self.user_used = []
             self.user_fleet = []
             self.user_fleet_full = {}
@@ -38,7 +39,7 @@ try:
         def attacked(self):
             parent_name = self.sender().objectName()
             parent = (int(parent_name[-2]), int(parent_name[-1]))
-            if parent not in self.ii_field_damaged:
+            if parent not in self.ii_field_damaged and self.is_game:
                 self.ii_field_damaged.add(parent)
                 if parent in self.ii_fleet_full:
                     eval('self.pushButton_2{}{}.setStyleSheet("'
@@ -56,6 +57,7 @@ try:
                         self.ii_fleet.remove(self.ii_fleet_full[parent])
                     self.ii_fleet_full.pop(parent)
                     if not self.user_fleet or not self.ii_fleet:
+                        self.is_game = False
                         QMessageBox(self).question(self, 'Game over',
                                                    'Вы победили!\nPress '
                                                    'Esc to close',
@@ -69,6 +71,7 @@ try:
                         self.computer_attack()
                         return
                     else:
+                        self.is_game = False
                         QMessageBox(self).question(self, 'Game over',
                                                    'Вы победили!\nPress'
                                                    'Esc to close',
@@ -146,6 +149,7 @@ try:
                 self.deleteLater()
 
         def game(self):
+            self.is_game = True
             for i in range(100, 200):
                 eval('self.pushButton_{q}.setDisabled(True)'.format(q=i))
             mes = QMessageBox(self)
@@ -239,6 +243,7 @@ try:
                     self.engame()
 
         def engame(self):
+            self.is_game = False
             for i in self.ii_fleet:
                 for pos in i.field:
                     eval(
@@ -394,7 +399,7 @@ try:
         ex = MyWidget()
         ex.show()
         sys.exit(app.exec_())
-except Exception:
+except:
     execute = sys.exc_info()
     if not execute[0] == SystemExit:
         print('Похоже, произошла непредвиденная ошибка. Если вы видете это '
